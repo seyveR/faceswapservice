@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  facebot:
+    build: "./configs/python"
+    container_name: facebot
+    ports:
+      - ${facebot_server_port}:80
+    environment:
+      MAX_JOBS: ${MAX_JOBS}
+      facebot_server_port: ${facebot_server_port}
+      HOST_IP: ${HOST_IP}
+    volumes:
+      - type: bind
+        source: ./configs/python/server/app
+        target: /code/app
+      - type: bind
+        source: ./configs/python/server/downloaded_images
+        target: /code/downloaded_images
+      - type: bind
+        source: ./configs/python/server/results_images
+        target: /code/results_images
+
+      - type: bind
+        source: ./configs/python/home/roop/roop
+        target: /code/roop
+      - type: bind
+        source: ./configs/python/models
+        target: /code/gfpgan
+      - type: bind
+        source: ./configs/python/insightface
+        target: /root/.insightface
+    networks:
+      - facebot-network
+
+  bot:
+    build: "./configs/python/bot"
+    container_name: callbackserver
+    environment:
+      token: ${token}
+    ports:
+      - 8080:8080
+    volumes:
+      - type: bind
+        source: ./configs/python/bot/tg_bot.py
+        target: /code/tg_bot.py
+      - type: bind
+        source: ./configs/python/bot/callback_server.py
+        target: /code/callback_server.py
+    networks:
+      - facebot-network
+
+
+networks:
+  facebot-network:
+    driver: bridge
